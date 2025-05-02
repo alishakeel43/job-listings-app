@@ -37,13 +37,18 @@ const JobList = () => {
 
   const columns = [
     {
+      name: 'Job ID',
+      selector: (row) => row.id,
+      sortable: true,
+    },
+    {
       name: 'Job Title',
       selector: (row) => row.title,
       sortable: true,
     },
     {
-      name: 'Description',
-      selector: (row) => row.description,
+      name: 'Company',
+      selector: (row) => row.company,
       wrap: true,
     },
     {

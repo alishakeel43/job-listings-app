@@ -12,17 +12,12 @@ from models import Job, Base
 import schedule
 from datetime import datetime
 import os
+from database import  SessionLocal
 
 # Load environment variables
 from dotenv import load_dotenv
 load_dotenv()
-
-# Set up logging
-logging.basicConfig(filename='scraper.log', level=logging.INFO,
-                    format='%(asctime)s:%(levelname)s:%(message)s')
-
-from database import session  # Import the session from database.py
-
+db = SessionLocal()
 # Logging configuration
 logging.basicConfig(filename='scraper.log', level=logging.INFO,
                     format='%(asctime)s:%(levelname)s:%(message)s')
@@ -53,26 +48,48 @@ def scrape_jobs():
                 location = card.find_element(By.CLASS_NAME, "Job_job-card__country__GRVhK").text
 
                 # Check if job already exists
-                existing_job = session.query(Job).filter_by(title=title, company=company, location=location).first()
-                if existing_job:
-                    continue
+                existing_job = db.query(Job).filter_by(title=title, company=company, location=location).first()
+                if not existing_job:
+                    new_job = Job(title=title, company=company, location=location)
+                    db.add(new_job)
+                    db.commit()
+                    scraped_count += 1
 
-                new_job = Job(title=title, company=company, location=location)
-                session.add(new_job)
-                scraped_count += 1
             except Exception as e:
                 logging.error(f"Error parsing card: {str(e)}")
                 continue
+            finally:
+                db.close()
 
-        session.commit()
         logging.info(f"Scraping complete. {scraped_count} new jobs added.")
         driver.quit()
 
     except Exception as e:
         logging.error(f"Scraping failed: {str(e)}")
 
-# Schedule the job every 3 minutes (for testing)
-schedule.every(1).seconds.do(scrape_jobs)
+
+# Get the interval (in seconds) from the environment variable
+job_interval_seconds = os.getenv("JOB_SCHEDULES_EVERY_SECOND")  # For testing set seconds in .env
+
+# Check if the variable exists and is a valid number
+if job_interval_seconds is not None:
+    if job_interval_seconds.isdigit():  # Check if the value is numeric
+        schedule.every(int(job_interval_seconds)).seconds.do(scrape_jobs)
+        print(f"Job scheduled to run every {job_interval_seconds} seconds.")
+    else:
+        print(f"Invalid value for JOB_SCHEDULES_EVERY_SECOND: {job_interval_seconds}. Must be a number.")
+else:
+    print("JOB_SCHEDULES_EVERY_SECOND not set in the environment. Skipping job scheduling.")
+
+# Load and split schedule times
+schedule_times = os.getenv("JOB_SCHEDULES", "").split(",")
+
+# Register jobs for each time
+for sched_time in schedule_times:
+    clean_time = sched_time.strip()
+    if clean_time:
+        schedule.every().day.at(clean_time).do(scrape_jobs)
+        print(f"Scheduled job at {clean_time}")
 
 # Uncomment for real cron-like scheduling and comment the above line
 # schedule.every().day.at("00:00").do(scrape_jobs)

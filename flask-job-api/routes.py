@@ -18,7 +18,7 @@ def get_jobs():
     finally:
         db.close()
 
-@job_routes.route("/", methods=["POST"])
+@job_routes.route("/add", methods=["POST"])
 def add_job():
     data = request.get_json()
     db = SessionLocal()
