@@ -1,31 +1,79 @@
 // src/components/JobList.js
 import React, { useEffect, useState } from 'react';
 import { getJobs, deleteJob } from '../services/api';
-import JobItem from './JobItem';
+import DataTable from 'react-data-table-component';
 
 const JobList = () => {
   const [jobs, setJobs] = useState([]);
 
   const fetchJobs = async () => {
-    const res = await getJobs();
-    setJobs(res.data);
+    try {
+      const res = await getJobs();
+      setJobs(res.data);
+    } catch (err) {
+      console.error('Failed to fetch jobs:', err);
+    }
   };
 
   const handleDelete = async (id) => {
-    await deleteJob(id);
-    fetchJobs();
+    try {
+      await deleteJob(id);
+      fetchJobs();
+    } catch (err) {
+      console.error('Failed to delete job:', err);
+    }
   };
-
+  
   useEffect(() => {
-    fetchJobs();
+    fetchJobs(); // Initial fetch
+
+    const interval = setInterval(() => {
+      fetchJobs();
+    }, 3000); // 3000 ms = 3 seconds
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval);
   }, []);
 
+  const columns = [
+    {
+      name: 'Job Title',
+      selector: (row) => row.title,
+      sortable: true,
+    },
+    {
+      name: 'Description',
+      selector: (row) => row.description,
+      wrap: true,
+    },
+    {
+      name: 'Location',
+      selector: (row) => row.location,
+      sortable: true,
+    },
+    {
+      name: 'Actions',
+      cell: (row) => (
+        <button
+          onClick={() => handleDelete(row.id)}
+          className="text-red-600 hover:underline"
+        >
+          Delete
+        </button>
+      ),
+    },
+  ];
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Job Listings</h1>
-      {jobs.map((job) => (
-        <JobItem key={job.id} job={job} onDelete={handleDelete} />
-      ))}
+    <div className="mt-6">
+      <DataTable
+        title="Job Listings"
+        columns={columns}
+        data={jobs}
+        pagination
+        highlightOnHover
+        striped
+      />
     </div>
   );
 };

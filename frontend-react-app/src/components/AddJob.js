@@ -1,43 +1,53 @@
-// src/components/AddJob.js
 import React, { useState } from 'react';
 import { addJob } from '../services/api';
 
 const AddJob = ({ onJobAdded }) => {
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [company, setCompany] = useState('');
+  const [location, setLocation] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await addJob({ title, description });
+    await addJob({ title, company, location });
     setTitle('');
-    setDescription('');
+    setCompany('');
+    setLocation('');
     onJobAdded();
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mb-6">
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <input
         type="text"
         placeholder="Job Title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="block w-full p-2 mb-2 border rounded"
+        className="p-2 border rounded"
         required
       />
-      <textarea
-        placeholder="Job Description"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        className="block w-full p-2 mb-2 border rounded"
+      <input
+        type="text"
+        placeholder="Company"
+        value={company}
+        onChange={(e) => setCompany(e.target.value)}
+        className="p-2 border rounded"
         required
       />
-      <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
-        Add Job
-      </button>
+      <input
+        type="text"
+        placeholder="Location"
+        value={location}
+        onChange={(e) => setLocation(e.target.value)}
+        className="p-2 border rounded"
+        required
+      />
+      <div className="md:col-span-3 text-right">
+        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          Add Job
+        </button>
+      </div>
     </form>
   );
 };
 
 export default AddJob;
-
-

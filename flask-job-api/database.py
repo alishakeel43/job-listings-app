@@ -1,11 +1,15 @@
+from config import DATABASE_URL
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from config import DATABASE_URI
-from models import Base
+from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.ext.declarative import declarative_base
 
-engine = create_engine(DATABASE_URI)
-Session = sessionmaker(bind=engine)
-session = Session()
+# MySQL connection string format:
+# dialect+driver://username:password@host:port/database
+# DATABASE_URL = "mysql+pymysql://your_user:your_password@localhost:3306/your_database"
 
-def init_db():
-    Base.metadata.create_all(engine)
+engine = create_engine(DATABASE_URL, echo=False)
+
+SessionLocal = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
+
+# Base model
+Base = declarative_base()
